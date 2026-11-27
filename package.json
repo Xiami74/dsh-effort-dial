@@ -1,0 +1,54 @@
+{
+  "name": "dsh-effort-dial",
+  "version": "0.9.0",
+  "description": "DSH 模型菜单里的 Codex 风格推理等级滑条：零延迟跟手、档位磁吸阻尼；模型入口并入同一行，列表按厂牌配色并标出官网；闪电开关把「深度思考 + 多派子代理」写进输入框。",
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "deepseek-harness",
+    "reasoning",
+    "thinking",
+    "effort",
+    "slider",
+    "codex",
+    "reasoning-effort"
+  ],
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": {
+      "default": "./lib/index.js"
+    },
+    "./client": {
+      "default": "./lib/client.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "manifestVersion": 1,
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web"
+    }
+  },
+  "files": [
+    "lib",
+    "docs",
+    "cordis.patch.yml",
+    "README.md",
+    "PITFALLS.md",
+    "LICENSE"
+  ],
+  "license": "MIT",
+  "author": "dsh-effort-dial contributors",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/<你的用户名>/dsh-effort-dial.git"
+  },
+  "homepage": "https://github.com/<你的用户名>/dsh-effort-dial#readme",
+  "engines": {
+    "node": ">=18"
+  }
+}

@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-ds-dark-theme>
+<head>
+<meta charset="utf-8">
+<title>dsh-effort-dial · 宿主模拟台</title>
+<style>
+  html, body { height: 100%; margin: 0; }
+  body {
+    background: #1b1c20; color: #e8e8ea;
+    font: 14px/1.5 system-ui, -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif;
+    display: flex; align-items: center; justify-content: center;
+  }
+  #root {
+    width: 600px; background: #2a2b2e; border: 1px solid rgba(255,255,255,.08);
+    border-radius: 16px; padding: 14px; box-shadow: 0 8px 28px rgba(0,0,0,.3);
+  }
+  .mockInput { color: #6f6f78; padding: 6px 4px 10px; }
+  .mockDraft {
+    width: 100%; box-sizing: border-box; min-height: 60px; resize: vertical;
+    background: #232427; color: #e8e8ea; border: 1px solid rgba(255,255,255,.1);
+    border-radius: 10px; padding: 8px 10px; font: 13px/1.55 inherit; margin-bottom: 10px;
+  }
+  .mockRow { display: flex; align-items: center; justify-content: space-between; }
+  .mockTools { display: flex; gap: 6px; }
+  .mockTool { width: 26px; height: 26px; border-radius: 8px; border: 1px solid rgba(255,255,255,.08); display: grid; place-items: center; color: #9a9aa2; }
+  #log {
+    position: fixed; right: 16px; top: 16px; width: 300px; max-height: 80vh; overflow: auto;
+    background: #24252a; border: 1px solid rgba(255,255,255,.1); border-radius: 12px;
+    padding: 10px; font: 11px/1.5 ui-monospace, Consolas, monospace; color: #b9b9c2; white-space: pre-wrap;
+  }
+  #log b { color: #c4b5fd; font-weight: 500; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<div id="log"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/react@18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/react-dom@18.2.0/umd/react-dom.production.min.js"></script>
+<script>
+  window.__commits = [];
+  window.__errors = [];
+  window.addEventListener('error', function (e) { window.__errors.push(String(e.message)); });
+  window.__loaded = null;
+  window.__ModuleLoader__ = { load: function (def) { window.__loaded = def; } };
+</script>
+<script src="../lib/client.js"></script>
+<script>
+(function () {
+  var log = document.getElementById('log');
+  function say(label, value) {
+    var div = document.createElement('div');
+    div.innerHTML = '<b>' + label + '</b> ' + (value === undefined ? '' : String(value));
+    log.appendChild(div);
+  }
+
+  if (!window.__loaded) { say('失败', 'plugin 没有调用 __ModuleLoader__.load'); return; }
+  say('loader.id', window.__loaded.id);
+
+  var subs = [];
+  var snapshot = {
+    next: { provider: 'deepseek', model: 'deepseek-v41-flash', reasoningEffort: 'max' },
+    lastUsed: null
+  };
+  var face = {
+    getSnapshot: function () { return snapshot; },
+    subscribe: function (fn) { subs.push(fn); return function () {}; }
+  };
+  var catalog = {
+    default: { provider: 'deepseek', model: 'deepseek-v41-flash' },
+    groups: [
+      {
+        id: 'deepseek', name: 'DeepSeek',
+        models: [
+          {
+            id: 'deepseek-v41-flash', name: 'DeepSeek-V41-Flash',
+            reasoning: {
+              defaultEffort: 'high',
+              efforts: [
+                { id: 'off', name: 'Off', description: '不进行额外推理，直接回答' },
+                { id: 'low', name: 'Low', description: '快速给出回复，适合轻量改动' },
+                { id: 'medium', name: 'Medium', description: '平衡速度与深度' },
+                { id: 'high', name: 'High', description: '延长思考时间以处理复杂问题' },
+                { id: 'max', name: 'Max', description: '针对高难度问题提供更深入的分析' }
+              ]
+            }
+          },
+          {
+            id: 'deepseek-v41-pro', name: 'DeepSeek-V41-Pro',
+            reasoning: {
+              defaultEffort: 'low',
+              efforts: [
+                { id: 'low', name: 'Low', description: '轻量' },
+                { id: 'high', name: 'High', description: '深入' }
+              ]
+            }
+          },
+          { id: 'deepseek-chat', name: 'DeepSeek-Chat（无档位）' }
+        ]
+      },
+      {
+        id: 'moonshot', name: 'Moonshot',
+        models: [
+          {
+            id: 'kimi-k2', name: 'Kimi-K2',
+            reasoning: {
+              defaultEffort: 'off',
+              efforts: [
+                { id: 'off', name: 'Off' },
+                { id: 'on', name: 'On' }
+              ]
+            }
+          }
+        ]
+      }
+    ]
+  };
+
+  /* ---- 假输入框（镜像宿主的 conversation.input.shell） ---- */
+  window.__draft = '';
+  window.__phase = 'idle';
+  var draftListeners = [];
+  var fakeShell = {
+    state: {
+      getSnapshot: function () { return { draft: window.__draft, phase: window.__phase }; },
+      subscribe: function (fn) { draftListeners.push(fn); return function () { var i = draftListeners.indexOf(fn); if (i >= 0) draftListeners.splice(i, 1); }; }
+    },
+    actions: {
+      setDraft: function (text) {
+        window.__draft = String(text == null ? '' : text);
+        var input = document.getElementById('draft');
+        if (input) input.value = window.__draft;
+        say('setDraft', JSON.stringify(window.__draft.slice(0, 26) + (window.__draft.length > 26 ? '…' : '')));
+        draftListeners.slice().forEach(function (fn) { try { fn(); } catch (e) {} });
+      }
+    }
+  };
+  var fakeConversation = {
+    input: { shell: function () { return fakeShell; } }
+  };
+
+  var slotRegistration = null;
+  var ctx = {
+    get: function (name) { return name === 'conversation' ? fakeConversation : undefined; },
+    slots: {
+      inject: function (name, fn) { fn(); },
+      register: function (options, Comp) { slotRegistration = { options: options, Comp: Comp }; return function () {}; }
+    },
+    sessions: {
+      binding: function () {
+        return { session: { projections: { faceOf: function () { return face; } } } };
+      },
+      subagentAddress: function () { return undefined; }
+    },
+    remote: {
+      $on: function () { return function () {}; },
+      session: {
+        modelCatalog: function () { return Promise.resolve({ ok: true, value: catalog }); },
+        selectModel: function (request) {
+          window.__commits.push(request);
+          if (window.__failNext) {
+            window.__failNext = false;
+            say('selectModel', '模拟拒绝');
+            return Promise.resolve({ ok: false, error: { code: 'session/locked', message: '模拟：宿主拒绝这次选择' } });
+          }
+          if (window.__delayMs) {
+            return new Promise(function (resolve) {
+              setTimeout(function () {
+                snapshot = {
+                  next: { provider: request.provider, model: request.model, reasoningEffort: request.reasoningEffort },
+                  lastUsed: null
+                };
+                subs.forEach(function (fn) { try { fn(); } catch (e) {} });
+                resolve({ ok: true });
+              }, window.__delayMs);
+            });
+          }
+          snapshot = {
+            next: { provider: request.provider, model: request.model, reasoningEffort: request.reasoningEffort },
+            lastUsed: null
+          };
+          subs.forEach(function (fn) { try { fn(); } catch (e) {} });
+          say('selectModel', JSON.stringify(request.reasoningEffort || '(不变)'));
+          return Promise.resolve({ ok: true });
+        }
+      }
+    },
+    on: function () { return function () {}; }
+  };
+
+  var req = function (id) {
+    if (id === 'react') return window.React;
+    if (id === 'react-dom') return window.ReactDOM;
+    if (id === 'react/jsx-runtime') return window.React;
+    return {};
+  };
+
+  var mod;
+  try {
+    mod = window.__loaded.factory(req);
+  } catch (e) {
+    say('factory 抛错', e && e.message);
+    return;
+  }
+  say('module.name', mod.name);
+
+  try {
+    mod.apply(ctx);
+  } catch (e) {
+    say('apply 抛错', e && e.message);
+    return;
+  }
+  if (!slotRegistration) { say('失败', 'apply 没有注册 slot'); return; }
+  say('slot', slotRegistration.options.name + ' / priority ' + slotRegistration.options.priority);
+
+  var Comp = slotRegistration.Comp;
+  var root = ReactDOM.createRoot(document.getElementById('root'));
+  root.render(
+    React.createElement('div', null,
+      React.createElement('textarea', {
+        id: 'draft',
+        className: 'mockDraft',
+        placeholder: '给 DeepSeek 发消息…（模拟宿主输入框）',
+        onInput: function (e) {
+          window.__draft = e.target.value;
+          draftListeners.slice().forEach(function (fn) { try { fn(); } catch (err) {} });
+        }
+      }),
+      React.createElement('div', { className: 'mockRow' },
+        React.createElement('div', { className: 'mockTools' },
+          React.createElement('div', { className: 'mockTool' }, '+'),
+          React.createElement('div', { className: 'mockTool' }, '◎')
+        ),
+        React.createElement(Comp, { sessionId: 's1', locked: false })
+      )
+    )
+  );
+
+  setTimeout(function () {
+    if (window.__errors.length) say('页面错误', window.__errors.join(' | '));
+    else say('渲染', 'ok');
+  }, 600);
+})();
+</script>
+</body>
+</html>

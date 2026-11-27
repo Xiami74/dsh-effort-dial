@@ -1,0 +1,11 @@
+# 个人备份 / 调试产物
+.bak/
+*.bak
+*.bak-*
+debug.log
+
+# 依赖与运行时
+node_modules/
+*.log
+.DS_Store
+Thumbs.db
