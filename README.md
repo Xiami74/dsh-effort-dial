@@ -133,7 +133,7 @@ DSH 模型菜单里的 **Codex 风格推理等级滑条**。点开输入框旁�
 把仓库克隆到本地（下面用 `<插件目录>` 指代这个文件夹的**绝对路径**）：
 
 ```bash
-git clone https://github.com/<你的用户名>/dsh-effort-dial.git
+git clone https://github.com/Xiami74/dsh-effort-dial.git
 ```
 
 **方式一：命令行**
