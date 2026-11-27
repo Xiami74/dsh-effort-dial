@@ -38,7 +38,7 @@ function ok(name, cond, extra) {
 function near(a, b, eps = 1e-6) { return Math.abs(a - b) < eps }
 
 ok('顶层同步注册了 Loader', captured !== null)
-ok('插件 id 与包名一致', captured && captured.id === 'dsh-effort-dial', captured && captured.id)
+ok('插件 id 与包名一致', captured && captured.id === '@xiami74/dsh-effort-dial', captured && captured.id)
 
 const reactStub = {
   createElement: (...args) => ({ type: 'el', args }),

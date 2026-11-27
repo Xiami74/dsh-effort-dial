@@ -2,11 +2,15 @@
 
 踩过的坑，改这个插件之前先读一遍。
 
-1. **插件 id 必须与包名完全一致。**
+1. **插件 id 必须与包名完全一致（scoped 包除外）。**
    `cordis.patch.yml` 的 `insert.name`、`package.json` 的 `name`、`client.js` 里
-   `window.__ModuleLoader__.load({ id })`、`apply()` 返回的 `module.name`，四处必须都是
-   `dsh-effort-dial`。宿主 client-modules 扫描器只在「Loader 条目名 === 包名」时
-   才编入浏览器启动图，不一致就**静默跳过**（没有报错，只是没有界面）。
+   `window.__ModuleLoader__.load({ id })`、`apply()` 返回的 `module.name`，四处必须一致。
+   宿主 client-modules 扫描器只在「Loader 条目名 === 包名」时才编入浏览器启动图，
+   不一致就**静默跳过**（没有报错，只是没有界面）。
+   **scoped 包（`@scope/name`）的例外**：`insert.id` 用短名（`effort-dial`），
+   `insert.name` 和其余三处用全称（`@xiami74/dsh-effort-dial`）——
+   参照 DSH 自带的 `@liustack/modlens`（`insert.id: modlens`）。
+   npm 包名不许大写，scope 必须小写（`xiami74` 不是 `Xiami74`）。
 
 2. **slot 必须先 `inject` 再 `register`。**
    直接 `ctx.slots.register({name:'conversation.input.model'})` 会抛

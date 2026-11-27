@@ -1,5 +1,5 @@
 {
-  "name": "dsh-effort-dial",
+  "name": "@xiami74/dsh-effort-dial",
   "version": "0.9.0",
   "description": "DSH 模型菜单里的 Codex 风格推理等级滑条：零延迟跟手、档位磁吸阻尼；模型入口并入同一行，列表按厂牌配色并标出官网；闪电开关把「深度思考 + 多派子代理」写进输入框。",
   "keywords": [

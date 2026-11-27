@@ -11,5 +11,5 @@
 # ============================================================================
 
 - insert:
-    - id: dsh-effort-dial
-      name: dsh-effort-dial
+    - id: effort-dial
+      name: @xiami74/dsh-effort-dial

@@ -130,27 +130,41 @@ DSH 模型菜单里的 **Codex 风格推理等级滑条**。点开输入框旁�
 
 ## 安装
 
-把仓库克隆到本地（下面用 `<插件目录>` 指代这个文件夹的**绝对路径**）：
+**方式一：npm 包（推荐，插件市场收录用这个）**
+
+```bash
+dsh plugin --profile desktop add @xiami74/dsh-effort-dial
+```
+
+**方式二：GitHub 源码**（装的是 main 当前状态）
+
+```bash
+dsh plugin --profile desktop add github:Xiami74/dsh-effort-dial
+```
+
+> 两种来源别混用：同一包名先后从两种来源装会并存冲突，换来源前先 `remove`。
+
+**方式三：本地目录（开发用）**
+
+把仓库克隆到本地（`<插件目录>` 指这个文件夹的**绝对路径**）：
 
 ```bash
 git clone https://github.com/Xiami74/dsh-effort-dial.git
-```
-
-**方式一：命令行**
-
-```bash
 dsh plugin --profile desktop add link:<插件目录>
 ```
 
-**方式二：手工**
+或手工：
 
 1. profile `package.json`（默认 `~/.dsh/profiles/desktop/package.json`）的 `dependencies`
-   加 `"dsh-effort-dial": "link:<插件目录>"`
-2. 同一文件的 `dsh.profile.bundles` 数组里加 `"dsh-effort-dial"`
+   加 `"@xiami74/dsh-effort-dial": "link:<插件目录>"`
+2. 同一文件的 `dsh.profile.bundles` 数组里加 `"@xiami74/dsh-effort-dial"`
 3. 在 profile 的 `node_modules` 下建一个指向 `<插件目录>` 的链接/联接：
    - Windows（PowerShell，无需管理员）：
-     `New-Item -ItemType Junction -Path "<profile目录>\node_modules\dsh-effort-dial" -Target "<插件目录>"`
-   - macOS / Linux：`ln -s <插件目录> <profile目录>/node_modules/dsh-effort-dial`
+     `New-Item -ItemType Junction -Path "<profile目录>\node_modules\@xiami74\dsh-effort-dial" -Target "<插件目录>"`（先建 `@xiami74` 目录）
+   - macOS / Linux：`mkdir -p <profile目录>/node_modules/@xiami74 && ln -s <插件目录> <profile目录>/node_modules/@xiami74/dsh-effort-dial`
+   - 注意：scoped 包在磁盘上落在 `node_modules/@xiami74/dsh-effort-dial`，
+     `cordis.patch.yml` 的 `insert.id` 用短名 `effort-dial`、`insert.name` 用全称
+
 4. **完全退出 DSH 桌面端再重开** —— 客户端启动图只在进程启动时构建，热重启不生效
 
 > 验证顺序：改完先跑 `node test/functions.mjs`，再重开 DSH，点开输入框旁的模型席确认滑条出现。
